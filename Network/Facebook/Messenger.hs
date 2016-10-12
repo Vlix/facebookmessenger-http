@@ -53,7 +53,7 @@ userProfileRequest accessToken userid uptypes =
   where
     types = L.intercalate "," $ fmap show uptypes
 
-accountLinkingRequest :: (MonadIO m, MonadThrow m) => AccesToken -> AccountLinkToken -> Manager -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
+accountLinkingRequest :: (MonadIO m, MonadThrow m) => AccesToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
 accountLinkingRequest accessToken accountLinkToken =
         fbGetRequest ("https://graph.facebook.com/v2.6/me?fields=recipient&account_linking_token="
                                                       <> T.unpack accountLinkToken
