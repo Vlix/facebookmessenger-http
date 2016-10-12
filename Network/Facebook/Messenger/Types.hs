@@ -4,6 +4,10 @@ module Network.Facebook.Messenger.Types where
 import           Data.Text      (Text (..))
 
 
+type UserID           = Text
+type AccesToken       = Text
+type AccountLinkToken = Text
+
 data FBResponse a b = FBResponse a
                     | FailureResponse b
                     | BadResponse
