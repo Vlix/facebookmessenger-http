@@ -1,12 +1,12 @@
 module Network.Facebook.Messenger.Types where
 
 
-import           Data.Text      (Text (..))
-
+import           Data.Text          (Text)
+import           Data.ByteString    (ByteString)
 
 type UserID           = Text
 type AccesToken       = Text
-type AccountLinkToken = Text
+type AccountLinkToken = ByteString
 
 data FBResponse a b = FBResponse a
                     | FailureResponse b

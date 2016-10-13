@@ -4,10 +4,11 @@ module Network.Facebook.Messenger
     , sendActionRequest
     , settingsRequest
     , userProfileRequest
-    , accountLinkingRequest
+    , psidRequest
     ) where
 
 import           Data.Monoid                ((<>))
+import           Data.ByteString            (ByteString)
 import           Data.ByteString.Lazy       (toStrict)
 import           Control.Monad.IO.Class     (MonadIO)
 import           Control.Monad.Catch        (MonadThrow)
@@ -15,6 +16,7 @@ import           Control.Monad.Catch        (MonadThrow)
 import           Data.Aeson
 import           Data.Aeson.Types           (typeMismatch)
 import qualified Data.List                  as L
+import           Data.String                (fromString)
 import           Data.Text                  (Text (..))
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
@@ -26,61 +28,50 @@ import           Network.Facebook.Messenger.Types
 
 
 messageRequest :: (MonadIO m, MonadThrow m) => AccesToken -> FB.SendRequest -> Manager -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
-messageRequest accessToken request =
-        fbPostRequest "https://graph.facebook.com/v2.6/me/messages?access_token="
-                  accessToken
-                  $ Just request
+messageRequest accessToken sRequest = fbPostRequest accessToken "me/messages" [] sRequest
 
 sendActionRequest :: (MonadIO m, MonadThrow m) => AccesToken -> FB.SenderActionRequest -> Manager -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
-sendActionRequest accessToken request =
-        fbPostRequest "https://graph.facebook.com/v2.6/me/messages?access_token="
-                  accessToken
-                  $ Just request
+sendActionRequest accessToken saRequest = fbPostRequest accessToken "me/messages" [] saRequest
 
 settingsRequest :: (MonadIO m, MonadThrow m) => AccesToken -> FB.SettingsRequest -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
-settingsRequest accessToken request =
-        fbPostRequest "https://graph.facebook.com/v2.6/me/thread_settings?access_token="
-                  accessToken
-                  $ Just request
+settingsRequest accessToken setRequest = fbPostRequest accessToken "me/thread_settings" [] setRequest
 
 userProfileRequest :: (MonadIO m, MonadThrow m) => AccesToken -> UserID -> [UserProfileType] -> Manager -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
-userProfileRequest accessToken userid uptypes =
-        fbGetRequest ("https://graph.facebook.com/v2.6/" <> T.unpack userid
-                                                         <> "?fields="
-                                                         <> types
-                                                         <> "&access_token=")
-                  accessToken
+userProfileRequest accessToken userid uptypes = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
   where
     types = L.intercalate "," $ fmap show uptypes
 
-accountLinkingRequest :: (MonadIO m, MonadThrow m) => AccesToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
-accountLinkingRequest accessToken accountLinkToken =
-        fbGetRequest ("https://graph.facebook.com/v2.6/me?fields=recipient&account_linking_token="
-                                                      <> T.unpack accountLinkToken
-                                                      <> "&access_token=")
-                  accessToken
+psidRequest :: (MonadIO m, MonadThrow m) => AccesToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
+psidRequest accessToken accountLinkToken = fbGetRequest accessToken "me" [("fields"               , Just "recipient")
+                                                                         ,("account_linking_token", Just accountLinkToken)
+                                                                         ]
 
 
 ----------------------
 -- Helper Functions --
 ----------------------
 
-fbPostRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b) => String -> Text -> a -> Manager -> m (FBResponse b FB.ErrorResponse)
-fbPostRequest s t a m = do
-    req' <- goPR s t
+accessTokenQuery :: AccesToken -> (ByteString, Maybe ByteString)
+accessTokenQuery t = ("access_token", Just $ TE.encodeUtf8 t)
+
+goPR :: (MonadIO m, MonadThrow m) => String -> m Request
+goPR s = parseRequest $ "https://graph.facebook.com/v2.6/" <> s
+
+fbPostRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b) => AccesToken -> String -> [(ByteString, Maybe ByteString)] -> a -> Manager -> m (FBResponse b FB.ErrorResponse)
+fbPostRequest t s qs a m = do
+    req' <- goPR s
     let req = req' { method = "POST"
                    , requestBody = RequestBodyLBS $ encode a
                    , requestHeaders = [(hContentType,"application/json")]
                    }
-    goHTTP req m
+        request = flip setQueryString req $ accessTokenQuery t : qs
+    goHTTP request m
 
-fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b) => String -> Text -> Manager -> m (FBResponse b FB.ErrorResponse)
-fbGetRequest s t m = do
-    req <- goPR s t
-    goHTTP req m
-
-goPR :: (MonadIO m, MonadThrow m) => String -> Text -> m Request
-goPR s t = parseRequest $ s <> (T.unpack t)
+fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b) => AccesToken -> String -> [(ByteString, Maybe ByteString)] -> Manager -> m (FBResponse b FB.ErrorResponse)
+fbGetRequest t s qs m = do
+    req <- goPR s
+    let request = flip setQueryString req $ accessTokenQuery t : qs
+    goHTTP request m
 
 goHTTP :: (MonadIO m, MonadThrow m, FromJSON b) => Request -> Manager -> m (FBResponse b FB.ErrorResponse)
 goHTTP req m = do
