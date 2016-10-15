@@ -5,6 +5,7 @@ module Network.Facebook.Messenger
     , settingsRequest
     , userProfileRequest
     , psidRequest
+    , accountUnlinkRequest
     ) where
 
 import           Data.Monoid                ((<>))
@@ -27,24 +28,27 @@ import qualified Web.Facebook.Messenger     as FB
 import           Network.Facebook.Messenger.Types
 
 
-messageRequest :: (MonadIO m, MonadThrow m) => AccessToken -> FB.SendRequest -> Manager -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
-messageRequest accessToken sRequest = fbPostRequest accessToken "me/messages" [] sRequest
+messageRequest :: (MonadIO m, MonadThrow m) => FB.SendRequest -> AccessToken -> Manager -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
+messageRequest sRequest accessToken = fbPostRequest accessToken "me/messages" [] sRequest
 
-senderActionRequest :: (MonadIO m, MonadThrow m) => AccessToken -> FB.SenderActionRequest -> Manager -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
-senderActionRequest accessToken saRequest = fbPostRequest accessToken "me/messages" [] saRequest
+senderActionRequest :: (MonadIO m, MonadThrow m) => FB.SenderActionRequest -> AccessToken -> Manager -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
+senderActionRequest saRequest accessToken = fbPostRequest accessToken "me/messages" [] saRequest
 
-settingsRequest :: (MonadIO m, MonadThrow m) => AccessToken -> FB.SettingsRequest -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
-settingsRequest accessToken setRequest = fbPostRequest accessToken "me/thread_settings" [] setRequest
+settingsRequest :: (MonadIO m, MonadThrow m) => FB.SettingsRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
+settingsRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
 
-userProfileRequest :: (MonadIO m, MonadThrow m) => AccessToken -> UserID -> [UserProfileType] -> Manager -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
-userProfileRequest accessToken userid uptypes = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
+userProfileRequest :: (MonadIO m, MonadThrow m) => [UserProfileType] -> UserID -> AccessToken -> Manager -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
+userProfileRequest uptypes userid accessToken = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
   where
     types = L.intercalate "," $ fmap show uptypes
 
 psidRequest :: (MonadIO m, MonadThrow m) => AccessToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
-psidRequest accessToken accountLinkToken = fbGetRequest accessToken "me" [("fields"               , Just "recipient")
-                                                                         ,("account_linking_token", Just accountLinkToken)
+psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fields"               , Just "recipient")
+                                                                         ,("account_linking_token", Just $ TE.encodeUtf8 accountLinkToken)
                                                                          ]
+
+accountUnlinkRequest :: (MonadIO m, MonadThrow m) => FB.AccountUnlinkRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
+accountUnlinkRequest auRequest accessToken = fbPostRequest accessToken "me/unlink_accounts" [] auRequest
 
 
 ----------------------
@@ -52,7 +56,7 @@ psidRequest accessToken accountLinkToken = fbGetRequest accessToken "me" [("fiel
 ----------------------
 
 accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
-accessTokenQuery token = ("access_token", Just token)
+accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
 
 goPR :: (MonadIO m, MonadThrow m) => String -> m Request
 goPR path = parseRequest $ "https://graph.facebook.com/v2.6/" <> path

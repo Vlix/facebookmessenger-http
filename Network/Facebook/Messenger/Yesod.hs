@@ -5,6 +5,7 @@ module Network.Facebook.Messenger.Yesod
     , settingsRequest
     , userProfileRequest
     , psidRequest
+    , accountUnlinkRequest
     ) where
 
 import           Data.ByteString            (ByteString)
@@ -29,32 +30,35 @@ import qualified Web.Facebook.Messenger     as FB
 import           Network.Facebook.Messenger.Types
 
 
-messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
+messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
             FB.SendRequest -> AccessToken -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
 messageRequest sRequest accessToken = fbPostRequest accessToken "me/messages" [] sRequest
 
 
-senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
+senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
             FB.SenderActionRequest -> AccessToken -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
 senderActionRequest saRequest accessToken = fbPostRequest accessToken "me/messages" [] saRequest
 
 
-settingsRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
+settingsRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
             FB.SettingsRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
 settingsRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
 
 
-userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
-                UserID -> [UserProfileType] -> AccessToken -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
-userProfileRequest userid uptypes accessToken = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
+userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
+                [UserProfileType] -> UserID -> AccessToken -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
+userProfileRequest uptypes userid accessToken = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
   where
     types = L.intercalate "," $ fmap show uptypes
 
 
-psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
-            AccountLinkToken -> AccessToken -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
-psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fields",Just "recipient"),("account_linking_token", Just accountLinkToken)]
-                                                      
+psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
+            AccountLinkToken -> AccessToken -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
+psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fields",Just "recipient"),("account_linking_token", Just $ TE.encodeUtf8 accountLinkToken)]
+
+accountUnlinkRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
+            FB.AccountUnlinkRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
+accountUnlinkRequest auRequest accessToken = fbPostRequest accessToken "me/unlink_accounts" [] auRequest
 
 
 ----------------------
@@ -62,13 +66,13 @@ psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fiel
 ----------------------
 
 accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
-accessTokenQuery token = ("access_token", Just token)
+accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
 
-goPR :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) => 
+goPR :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
     String -> m Request
 goPR path = parseRequest $ "https://graph.facebook.com/v2.6/" <> path
 
-fbPostRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, ToJSON a, FromJSON b) => 
+fbPostRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, ToJSON a, FromJSON b) =>
         AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> m (FBResponse b FB.ErrorResponse)
 fbPostRequest token path querystring a = do
     req' <- goPR path
@@ -79,14 +83,14 @@ fbPostRequest token path querystring a = do
         request = flip setQueryString req $ accessTokenQuery token : querystring
     goHTTP request
 
-fbGetRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) => 
+fbGetRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) =>
         AccessToken -> String -> [(ByteString, Maybe ByteString)] -> m (FBResponse b FB.ErrorResponse)
 fbGetRequest token path querystring = do
     req <- goPR path
     let request = flip setQueryString req $ accessTokenQuery token : querystring
     goHTTP request
 
-goHTTP :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) => 
+goHTTP :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) =>
         Request -> m (FBResponse b FB.ErrorResponse)
 goHTTP request = do
     res <- httpLbs request

@@ -5,8 +5,8 @@ import           Data.Text          (Text)
 import           Data.ByteString    (ByteString)
 
 type UserID           = Text
-type AccessToken      = ByteString
-type AccountLinkToken = ByteString
+type AccessToken      = Text
+type AccountLinkToken = Text
 
 data FBResponse a b = FBResponse a
                     | FailureResponse b
