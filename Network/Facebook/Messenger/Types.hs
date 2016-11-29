@@ -22,6 +22,7 @@ data UserProfileType = FirstName
                      | Locale
                      | Timezone
                      | Gender
+                     | IsPaymentEnabled
 
 instance Show UserProfileType where
     show FirstName   = "first_name"
@@ -30,3 +31,4 @@ instance Show UserProfileType where
     show Locale      = "locale"
     show Timezone    = "timezone"
     show Gender      = "gender"
+    show IsPaymentEnabled = "is_payment_enabled"
