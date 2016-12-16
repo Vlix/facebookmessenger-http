@@ -13,7 +13,7 @@ data FBResponse a b = FBResponse a
                     | BadResponse
                         { success_parse_fail :: Text
                         , error_parse_fail   :: Text
-                        , original_response  :: Text
+                        , original_response  :: ByteString
                         }
 
 data UserProfileType = FirstName

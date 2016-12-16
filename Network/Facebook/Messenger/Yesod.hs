@@ -17,9 +17,7 @@ import           Control.Monad.IO.Class     (MonadIO)
 import           Control.Monad.Reader       (MonadReader)
 
 import           Data.Aeson
-import           Data.Aeson.Types           (typeMismatch)
 import qualified Data.List                  as L
-import           Data.Text                  (Text (..))
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
 import           Network.HTTP.Client.Conduit
@@ -70,12 +68,12 @@ accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
 
 goPR :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
     String -> m Request
-goPR path = parseRequest $ "https://graph.facebook.com/v2.6/" <> path
+goPR url = parseRequest $ "https://graph.facebook.com/v2.6/" <> url
 
 fbPostRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, ToJSON a, FromJSON b) =>
         AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> m (FBResponse b FB.ErrorResponse)
-fbPostRequest token path querystring a = do
-    req' <- goPR path
+fbPostRequest token url querystring a = do
+    req' <- goPR url
     let req = req' { method = "POST"
                    , requestBody = RequestBodyLBS $ encode a
                    , requestHeaders = [(hContentType,"application/json")]
@@ -85,8 +83,8 @@ fbPostRequest token path querystring a = do
 
 fbGetRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) =>
         AccessToken -> String -> [(ByteString, Maybe ByteString)] -> m (FBResponse b FB.ErrorResponse)
-fbGetRequest token path querystring = do
-    req <- goPR path
+fbGetRequest token url querystring = do
+    req <- goPR url
     let request = flip setQueryString req $ accessTokenQuery token : querystring
     goHTTP request
 
@@ -96,9 +94,9 @@ goHTTP request = do
     res <- httpLbs request
     let response = responseBody res
     case eitherDecode' response of
-        Right res     -> return $ FBResponse res
+        Right res2    -> return $ FBResponse res2
         Left firsterr -> case eitherDecode' response :: Either String FB.ErrorRes of
-            Right (FB.ErrorRes res) -> return $ FailureResponse res
-            Left seconderr          -> return $ BadResponse (T.pack firsterr)
-                                                            (T.pack seconderr)
-                                                          $ (TE.decodeUtf8 . toStrict) response
+            Right (FB.ErrorRes res3) -> return $ FailureResponse res3
+            Left seconderr           -> return $ BadResponse (T.pack firsterr)
+                                                             (T.pack seconderr)
+                                                           $ toStrict response
