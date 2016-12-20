@@ -24,7 +24,7 @@ library
   default-extensions:  OverloadedStrings
 
   build-depends:       base                 >= 4.8  && < 4.9
-                     , aeson                >= 0.11 && < 0.12
+                     , aeson                >= 0.6  && < 0.12
                      , http-conduit         >= 2.1  && < 2.2
                      , http-types           >= 0.8
                      , text                 >= 0.11 && < 2.0
