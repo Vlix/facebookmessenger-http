@@ -79,10 +79,10 @@ goHTTP :: (MonadIO m, MonadThrow m, FromJSON b) => Request -> Manager -> m (FBRe
 goHTTP req m = do
     res <- httpLbs req m
     let response = responseBody res
-    case eitherDecode' response of
-        Right res2    -> return $ FBResponse res2
-        Left firsterr -> case eitherDecode' response :: Either String FB.ErrorRes of
-            Right (FB.ErrorRes res3) -> return $ FailureResponse res3
-            Left seconderr           -> return $ BadResponse (T.pack firsterr)
-                                                             (T.pack seconderr)
-                                                           $ toStrict response
+    case (eitherDecode' response :: Either String FB.ErrorRes) of
+        Right (FB.ErrorRes res2) -> return $ FailureResponse res2
+        Left firsterr            -> case eitherDecode' response of
+                                        Right res3     -> return $ FBResponse res3
+                                        Left seconderr -> return $ BadResponse (T.pack firsterr)
+                                                                               (T.pack seconderr)
+                                                                             $ toStrict response
