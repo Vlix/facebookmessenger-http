@@ -2,7 +2,7 @@ module Network.Facebook.Messenger
     ( module Network.Facebook.Messenger.Types
     , messageRequest
     , senderActionRequest
-    , settingsRequest
+    , profileRequest
     , userProfileRequest
     , psidRequest
     , accountUnlinkRequest
@@ -26,26 +26,26 @@ import qualified Web.Facebook.Messenger     as FB
 import           Network.Facebook.Messenger.Types
 
 
-messageRequest :: (MonadIO m, MonadThrow m) => FB.SendRequest -> AccessToken -> Manager -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
+messageRequest :: (MonadIO m, MonadThrow m) => FB.SendRequest -> AccessToken -> Manager -> m (FBResponse FB.MessageResponse FB.ErrorDetails)
 messageRequest sRequest accessToken = fbPostRequest accessToken "me/messages" [] sRequest
 
-senderActionRequest :: (MonadIO m, MonadThrow m) => FB.SenderActionRequest -> AccessToken -> Manager -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
+senderActionRequest :: (MonadIO m, MonadThrow m) => FB.SenderActionRequest -> AccessToken -> Manager -> m (FBResponse FB.SenderActionResponse FB.ErrorDetails)
 senderActionRequest saRequest accessToken = fbPostRequest accessToken "me/messages" [] saRequest
 
-settingsRequest :: (MonadIO m, MonadThrow m) => FB.SettingsRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
-settingsRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
+profileRequest :: (MonadIO m, MonadThrow m) => FB.ProfileRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+profileRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
 
-userProfileRequest :: (MonadIO m, MonadThrow m) => [UserProfileType] -> UserID -> AccessToken -> Manager -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
+userProfileRequest :: (MonadIO m, MonadThrow m) => [UserProfileType] -> UserID -> AccessToken -> Manager -> m (FBResponse FB.UserProfileResponse FB.ErrorDetails)
 userProfileRequest uptypes userid accessToken = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
   where
     types = L.intercalate "," $ fmap show uptypes
 
-psidRequest :: (MonadIO m, MonadThrow m) => AccessToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
+psidRequest :: (MonadIO m, MonadThrow m) => AccessToken -> AccountLinkToken -> Manager -> m (FBResponse FB.AccountLinkingResponse FB.ErrorDetails)
 psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fields"               , Just "recipient")
                                                                          ,("account_linking_token", Just $ TE.encodeUtf8 accountLinkToken)
                                                                          ]
 
-accountUnlinkRequest :: (MonadIO m, MonadThrow m) => FB.AccountUnlinkRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
+accountUnlinkRequest :: (MonadIO m, MonadThrow m) => FB.AccountUnlinkRequest -> AccessToken -> Manager -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
 accountUnlinkRequest auRequest accessToken = fbPostRequest accessToken "me/unlink_accounts" [] auRequest
 
 
@@ -53,7 +53,7 @@ accountUnlinkRequest auRequest accessToken = fbPostRequest accessToken "me/unlin
 -- Helper Functions --
 ----------------------
 
-fbPostRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b) => AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> Manager -> m (FBResponse b FB.ErrorResponse)
+fbPostRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b) => AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> Manager -> m (FBResponse b FB.ErrorDetails)
 fbPostRequest token url querystring a mngr = do
     req' <- goPR url
     let req = req' { method = "POST"
@@ -63,7 +63,7 @@ fbPostRequest token url querystring a mngr = do
         request = flip setQueryString req $ accessTokenQuery token : querystring
     goHTTP request mngr
 
-fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b) => AccessToken -> String -> [(ByteString, Maybe ByteString)] -> Manager -> m (FBResponse b FB.ErrorResponse)
+fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b) => AccessToken -> String -> [(ByteString, Maybe ByteString)] -> Manager -> m (FBResponse b FB.ErrorDetails)
 fbGetRequest token url querystring mngr = do
     req <- goPR url
     let request = flip setQueryString req $ accessTokenQuery token : querystring
@@ -75,14 +75,14 @@ accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
 goPR :: (MonadIO m, MonadThrow m) => String -> m Request
 goPR url = parseRequest $ "https://graph.facebook.com/v2.6/" <> url
 
-goHTTP :: (MonadIO m, MonadThrow m, FromJSON b) => Request -> Manager -> m (FBResponse b FB.ErrorResponse)
+goHTTP :: (MonadIO m, MonadThrow m, FromJSON b) => Request -> Manager -> m (FBResponse b FB.ErrorDetails)
 goHTTP req m = do
     res <- httpLbs req m
     let response = responseBody res
-    case (eitherDecode' response :: Either String FB.ErrorRes) of
-        Right (FB.ErrorRes res2) -> return $ FailureResponse res2
-        Left firsterr            -> case eitherDecode' response of
-                                        Right res3     -> return $ FBResponse res3
-                                        Left seconderr -> return $ BadResponse (T.pack firsterr)
-                                                                               (T.pack seconderr)
-                                                                             $ toStrict response
+    case (eitherDecode' response :: Either String FB.ErrorResponse) of
+        Right (FB.ErrorResponse res2) -> return $ FailureResponse res2
+        Left firsterr                 -> case eitherDecode' response of
+                                             Right res3     -> return $ FBResponse res3
+                                             Left seconderr -> return $ BadResponse (T.pack firsterr)
+                                                                                    (T.pack seconderr)
+                                                                                  $ toStrict response

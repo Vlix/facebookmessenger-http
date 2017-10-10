@@ -2,7 +2,7 @@ module Network.Facebook.Messenger.Yesod
     ( module Network.Facebook.Messenger.Types
     , messageRequest
     , senderActionRequest
-    , settingsRequest
+    , profileRequest
     , userProfileRequest
     , psidRequest
     , accountUnlinkRequest
@@ -29,33 +29,33 @@ import           Network.Facebook.Messenger.Types
 
 
 messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-            FB.SendRequest -> AccessToken -> m (FBResponse FB.MessageResponse FB.ErrorResponse)
+            FB.SendRequest -> AccessToken -> m (FBResponse FB.MessageResponse FB.ErrorDetails)
 messageRequest sRequest accessToken = fbPostRequest accessToken "me/messages" [] sRequest
 
 
 senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-            FB.SenderActionRequest -> AccessToken -> m (FBResponse FB.SenderActionResponse FB.ErrorResponse)
+            FB.SenderActionRequest -> AccessToken -> m (FBResponse FB.SenderActionResponse FB.ErrorDetails)
 senderActionRequest saRequest accessToken = fbPostRequest accessToken "me/messages" [] saRequest
 
 
-settingsRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-            FB.SettingsRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
-settingsRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
+profileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
+            FB.ProfileRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+profileRequest setRequest accessToken = fbPostRequest accessToken "me/thread_settings" [] setRequest
 
 
 userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-                [UserProfileType] -> UserID -> AccessToken -> m (FBResponse FB.UserAPIResponse FB.ErrorResponse)
+                [UserProfileType] -> UserID -> AccessToken -> m (FBResponse FB.UserProfileResponse FB.ErrorDetails)
 userProfileRequest uptypes userid accessToken = fbGetRequest accessToken (T.unpack userid) [("fields", Just $ fromString types)]
   where
     types = L.intercalate "," $ fmap show uptypes
 
 
 psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-            AccountLinkToken -> AccessToken -> m (FBResponse FB.AccountLinkingResponse FB.ErrorResponse)
+            AccountLinkToken -> AccessToken -> m (FBResponse FB.AccountLinkingResponse FB.ErrorDetails)
 psidRequest accountLinkToken accessToken = fbGetRequest accessToken "me" [("fields",Just "recipient"),("account_linking_token", Just $ TE.encodeUtf8 accountLinkToken)]
 
 accountUnlinkRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
-            FB.AccountUnlinkRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorResponse)
+            FB.AccountUnlinkRequest -> AccessToken -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
 accountUnlinkRequest auRequest accessToken = fbPostRequest accessToken "me/unlink_accounts" [] auRequest
 
 
@@ -71,7 +71,7 @@ goPR :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m) =>
 goPR url = parseRequest $ "https://graph.facebook.com/v2.6/" <> url
 
 fbPostRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, ToJSON a, FromJSON b) =>
-        AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> m (FBResponse b FB.ErrorResponse)
+        AccessToken -> String -> [(ByteString, Maybe ByteString)] -> a -> m (FBResponse b FB.ErrorDetails)
 fbPostRequest token url querystring a = do
     req' <- goPR url
     let req = req' { method = "POST"
@@ -82,21 +82,21 @@ fbPostRequest token url querystring a = do
     goHTTP request
 
 fbGetRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) =>
-        AccessToken -> String -> [(ByteString, Maybe ByteString)] -> m (FBResponse b FB.ErrorResponse)
+        AccessToken -> String -> [(ByteString, Maybe ByteString)] -> m (FBResponse b FB.ErrorDetails)
 fbGetRequest token url querystring = do
     req <- goPR url
     let request = flip setQueryString req $ accessTokenQuery token : querystring
     goHTTP request
 
 goHTTP :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m, FromJSON b) =>
-        Request -> m (FBResponse b FB.ErrorResponse)
+        Request -> m (FBResponse b FB.ErrorDetails)
 goHTTP request = do
     res <- httpLbs request
     let response = responseBody res
     case eitherDecode' response of
         Right res2    -> return $ FBResponse res2
-        Left firsterr -> case eitherDecode' response :: Either String FB.ErrorRes of
-            Right (FB.ErrorRes res3) -> return $ FailureResponse res3
+        Left firsterr -> case eitherDecode' response :: Either String FB.ErrorResponse of
+            Right (FB.ErrorResponse res3) -> return $ FailureResponse res3
             Left seconderr           -> return $ BadResponse (T.pack firsterr)
                                                              (T.pack seconderr)
                                                            $ toStrict response
