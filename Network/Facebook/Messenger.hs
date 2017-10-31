@@ -81,8 +81,8 @@ goHTTP req m = do
     let response = responseBody res
     case (eitherDecode' response :: Either String FB.ErrorResponse) of
         Right (FB.ErrorResponse res2) -> return $ FailureResponse res2
-        Left firsterr                 -> case eitherDecode' response of
-                                             Right res3     -> return $ FBResponse res3
-                                             Left seconderr -> return $ BadResponse (T.pack firsterr)
-                                                                                    (T.pack seconderr)
-                                                                                  $ toStrict response
+        Left errFail                  -> case eitherDecode' response of
+                                             Right res3       -> return $ FBResponse res3
+                                             Left successFail -> return $ BadResponse (T.pack successFail)
+                                                                                      (T.pack errFail)
+                                                                                    $ toStrict response
