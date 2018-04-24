@@ -73,7 +73,7 @@ accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
 accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
 
 goPR :: (MonadIO m, MonadThrow m) => String -> m Request
-goPR url = parseRequest $ "https://graph.facebook.com/v2.6/" <> url
+goPR url = parseRequest $ "https://graph.facebook.com/v2.12/" <> url
 
 goHTTP :: (MonadIO m, MonadThrow m, FromJSON b) => Request -> Manager -> m (FBResponse b FB.ErrorDetails)
 goHTTP req m = do
