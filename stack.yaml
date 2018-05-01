@@ -15,7 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-9.5
+resolver: lts-9.21
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -38,7 +38,7 @@ resolver: lts-9.5
 packages:
 - location:
    git: https://github.com/Vlix/facebookmessenger.git
-   commit: 8c2dfe1137ecf1b42a86faf3cb71ae4f891634ea
+   commit: f27f87ab29b3a11b7a355745612ddd8f96ee12d8
   extra-dep: true
 - '.'
 # Dependency packages to be pulled from upstream that are not in the resolver
