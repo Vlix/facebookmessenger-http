@@ -38,7 +38,7 @@ resolver: lts-9.5
 packages:
 - location:
    git: https://github.com/Vlix/facebookmessenger.git
-   commit: e4383c325e051ec5c53cff6117e5b21a6985909f
+   commit: 8c2dfe1137ecf1b42a86faf3cb71ae4f891634ea
   extra-dep: true
 - '.'
 # Dependency packages to be pulled from upstream that are not in the resolver
