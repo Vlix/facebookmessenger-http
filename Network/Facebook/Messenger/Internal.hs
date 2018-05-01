@@ -54,13 +54,13 @@ goHTTP request mngr = do
     response <- liftIO $ httpLbs request mngr
     return $ tryError $ responseBody response
   where tryError = eitherPlus trySuccess FailureResponse
-        trySuccess response firsterr =
-            eitherPlus (badResponse firsterr)
+        trySuccess response errorFail =
+            eitherPlus (`badResponse` errorFail)
                         FBResponse
                         response
-        badResponse firsterr response seconderr =
-            BadResponse (Text.pack firsterr)
-                        (Text.pack seconderr)
+        badResponse response errorFail successFail =
+            BadResponse (Text.pack successFail)
+                        (Text.pack errorFail)
                         $ toStrict response
         eitherPlus f g x = either (f x) g $ eitherDecode' x
 
