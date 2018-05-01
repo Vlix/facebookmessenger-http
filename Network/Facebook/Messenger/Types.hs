@@ -1,19 +1,19 @@
 module Network.Facebook.Messenger.Types where
 
 
-import           Data.Text          (Text)
-import           Data.ByteString    (ByteString)
+import Data.Text (Text)
+import Data.ByteString (ByteString)
 
-type UserID           = Text
-type AccessToken      = Text
+type UserID = Text
+type AccessToken = Text
 type AccountLinkToken = Text
 
 data FBResponse a b = FBResponse a
                     | FailureResponse b
                     | BadResponse
-                        { success_parse_fail :: Text
-                        , error_parse_fail   :: Text
-                        , original_response  :: ByteString
+                        { successParseFail :: Text
+                        , errorParseFail   :: Text
+                        , originalResponse  :: ByteString
                         }
 
 data UserProfileType = FirstName

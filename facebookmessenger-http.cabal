@@ -2,7 +2,7 @@
 -- further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                facebookmessenger-http
-version:             0.3.1.0
+version:             0.3.2.0
 synopsis:            HTTP package to send requests to Facebook's Messenger Platform
 -- description:
 license:             BSD3
@@ -17,15 +17,15 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Network.Facebook.Messenger
+                       Network.Facebook.Messenger.Reader
                        Network.Facebook.Messenger.Types
-                       Network.Facebook.Messenger.Yesod
-  -- other-modules:
+  other-modules:       Network.Facebook.Messenger.Internal
   -- other-extensions:
   default-extensions:  OverloadedStrings
 
   build-depends:       base
                      , aeson
-                     , http-conduit
+                     , http-client
                      , http-types
                      , text
                      , facebookmessenger >= 0.6 && < 1.0
