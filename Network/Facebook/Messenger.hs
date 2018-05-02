@@ -8,7 +8,7 @@ module Network.Facebook.Messenger (
   , UserID
   , AccessToken
   , AccountLinkToken
-  , FBResponse (..)
+  , Response (..)
   , UserProfileType (..)
   ) where
 
@@ -30,21 +30,21 @@ messageRequest :: (MonadIO m, MonadThrow m)
                => FB.SendRequest
                -> AccessToken
                -> Manager
-               -> m (FBResponse FB.MessageResponse FB.ErrorDetails)
+               -> m (Response FB.MessageResponse FB.ErrorDetails)
 messageRequest = fbPostRequest "me/messages" []
 
 senderActionRequest :: (MonadIO m, MonadThrow m)
                     => FB.SenderActionRequest
                     -> AccessToken
                     -> Manager
-                    -> m (FBResponse FB.SenderActionResponse FB.ErrorDetails)
+                    -> m (Response FB.SenderActionResponse FB.ErrorDetails)
 senderActionRequest = fbPostRequest "me/messages" []
 
 profileRequest :: (MonadIO m, MonadThrow m)
                => FB.ProfileRequest
                -> AccessToken
                -> Manager
-               -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+               -> m (Response FB.SuccessResponse FB.ErrorDetails)
 profileRequest = fbPostRequest "me/thread_settings" []
 
 userProfileRequest :: (MonadIO m, MonadThrow m)
@@ -52,7 +52,7 @@ userProfileRequest :: (MonadIO m, MonadThrow m)
                    -> UserID
                    -> AccessToken
                    -> Manager
-                   -> m (FBResponse FB.UserProfileResponse FB.ErrorDetails)
+                   -> m (Response FB.UserProfileResponse FB.ErrorDetails)
 userProfileRequest uptypes userid =
     fbGetRequest (Text.unpack userid) [("fields", Just $ typesToBS uptypes)]
   where
@@ -62,7 +62,7 @@ psidRequest :: (MonadIO m, MonadThrow m)
             => AccessToken
             -> AccountLinkToken
             -> Manager
-            -> m (FBResponse FB.AccountLinkingResponse FB.ErrorDetails)
+            -> m (Response FB.AccountLinkingResponse FB.ErrorDetails)
 psidRequest accountLinkToken =
     fbGetRequest "me" [("fields" , Just "recipient")
                       ,("account_linking_token", Just $ TE.encodeUtf8 accountLinkToken)
@@ -72,5 +72,5 @@ accountUnlinkRequest :: (MonadIO m, MonadThrow m)
                      => FB.AccountUnlinkRequest
                      -> AccessToken
                      -> Manager
-                     -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+                     -> m (Response FB.SuccessResponse FB.ErrorDetails)
 accountUnlinkRequest = fbPostRequest "me/unlink_accounts" []

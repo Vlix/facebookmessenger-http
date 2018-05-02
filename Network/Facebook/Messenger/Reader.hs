@@ -8,7 +8,7 @@ module Network.Facebook.Messenger.Reader (
   , UserID
   , AccessToken
   , AccountLinkToken
-  , FBResponse (..)
+  , Response (..)
   , UserProfileType (..)
   ) where
 
@@ -27,7 +27,7 @@ import Network.Facebook.Messenger.Types
 messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                => FB.SendRequest
                -> AccessToken
-               -> m (FBResponse FB.MessageResponse FB.ErrorDetails)
+               -> m (Response FB.MessageResponse FB.ErrorDetails)
 messageRequest sRequest =
     withManager . NFB.messageRequest sRequest
 
@@ -35,7 +35,7 @@ messageRequest sRequest =
 senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                     => FB.SenderActionRequest
                     -> AccessToken
-                    -> m (FBResponse FB.SenderActionResponse FB.ErrorDetails)
+                    -> m (Response FB.SenderActionResponse FB.ErrorDetails)
 senderActionRequest saRequest =
     withManager . NFB.senderActionRequest saRequest
 
@@ -43,7 +43,7 @@ senderActionRequest saRequest =
 profileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                => FB.ProfileRequest
                -> AccessToken
-               -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+               -> m (Response FB.SuccessResponse FB.ErrorDetails)
 profileRequest setRequest =
     withManager . NFB.profileRequest setRequest
 
@@ -52,7 +52,7 @@ userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader 
                    => [UserProfileType]
                    -> UserID
                    -> AccessToken
-                   -> m (FBResponse FB.UserProfileResponse FB.ErrorDetails)
+                   -> m (Response FB.UserProfileResponse FB.ErrorDetails)
 userProfileRequest uptypes userid =
     withManager . NFB.userProfileRequest uptypes userid
 
@@ -60,14 +60,14 @@ userProfileRequest uptypes userid =
 psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
             => AccountLinkToken
             -> AccessToken
-            -> m (FBResponse FB.AccountLinkingResponse FB.ErrorDetails)
+            -> m (Response FB.AccountLinkingResponse FB.ErrorDetails)
 psidRequest accountLinkToken =
     withManager . NFB.psidRequest accountLinkToken
 
 accountUnlinkRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                      => FB.AccountUnlinkRequest
                      -> AccessToken
-                     -> m (FBResponse FB.SuccessResponse FB.ErrorDetails)
+                     -> m (Response FB.SuccessResponse FB.ErrorDetails)
 accountUnlinkRequest auRequest =
     withManager . NFB.accountUnlinkRequest auRequest
 

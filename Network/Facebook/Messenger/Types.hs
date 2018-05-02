@@ -8,13 +8,15 @@ type UserID = Text
 type AccessToken = Text
 type AccountLinkToken = Text
 
-data FBResponse a b = FBResponse a
-                    | FailureResponse b
-                    | BadResponse
-                        { successParseFail :: Text
-                        , errorParseFail   :: Text
-                        , originalResponse  :: ByteString
-                        }
+data Response a b = Response a
+                  | FailureResponse b
+                  | BadResponse ParseError
+
+data ParseError = ParseError
+    { successParseFail :: Text
+    , errorParseFail   :: Text
+    , originalResponse  :: ByteString
+    } deriving (Eq, Show, Read, Ord)
 
 data UserProfileType = FirstName
                      | LastName
@@ -23,6 +25,7 @@ data UserProfileType = FirstName
                      | Timezone
                      | Gender
                      | IsPaymentEnabled
+    deriving (Eq, Read, Ord)
 
 instance Show UserProfileType where
     show FirstName   = "first_name"
