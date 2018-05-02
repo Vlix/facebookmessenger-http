@@ -8,8 +8,9 @@ module Network.Facebook.Messenger (
   , UserID
   , AccessToken
   , AccountLinkToken
-  , Response (..)
   , UserProfileType (..)
+  , Response (..)
+  , ParseError (..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO)

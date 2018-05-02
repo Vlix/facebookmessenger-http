@@ -8,8 +8,9 @@ module Network.Facebook.Messenger.Reader (
   , UserID
   , AccessToken
   , AccountLinkToken
-  , Response (..)
   , UserProfileType (..)
+  , Response (..)
+  , ParseError (..)
   ) where
 
 
