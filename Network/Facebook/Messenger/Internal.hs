@@ -14,7 +14,7 @@ import Data.Text.Encoding as TE (encodeUtf8)
 import qualified Network.HTTP.Client as HTTP
 import Network.HTTP.Types (hContentType)
 
-import Web.Facebook.Messenger as FB (ErrorDetails)
+import Web.Facebook.Messenger as FB (erError, ErrorDetails)
 import Network.Facebook.Messenger.Types
 
 
@@ -60,16 +60,16 @@ goHTTP :: (MonadIO m, FromJSON a)
 goHTTP request mngr = do
     response <- liftIO $ HTTP.httpLbs request mngr
     return $ tryError $ HTTP.responseBody response
-  where tryError = eitherPlus trySuccess FailureResponse
-        trySuccess response errorFail =
-            eitherPlus (`badResponse` errorFail)
-                        Response
-                        response
-        badResponse response errorFail successFail =
-            BadResponse $ ParseError (Text.pack successFail)
-                                     (Text.pack errorFail)
-                                     $ toStrict response
-        eitherPlus f g x = either (f x) g $ eitherDecode' x
+  where tryError res =
+            either trySuccess (FailureResponse . FB.erError) eDecoded
+          where eDecoded :: FromJSON a => Either String a
+                eDecoded = eitherDecode' res
+                trySuccess errorFail =
+                    either (badResponse errorFail) Response eDecoded
+                badResponse errorFail successFail =
+                    BadResponse $ ParseError (Text.pack successFail)
+                                             (Text.pack errorFail)
+                                             $ toStrict res
 
 accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
 accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
