@@ -5,7 +5,6 @@ module Network.Facebook.Messenger.Reader (
   , userProfileRequest
   , psidRequest
   , accountUnlinkRequest
-  , UserID
   , AccessToken
   , AccountLinkToken
   , UserProfileType (..)
@@ -51,7 +50,7 @@ profileRequest setRequest =
 
 userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                    => [UserProfileType]
-                   -> UserID
+                   -> FB.PSID
                    -> AccessToken
                    -> m (Response FB.UserProfileResponse FB.ErrorDetails)
 userProfileRequest uptypes userid =

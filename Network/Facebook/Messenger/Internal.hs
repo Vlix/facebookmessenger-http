@@ -1,6 +1,7 @@
 module Network.Facebook.Messenger.Internal (
     fbGetRequest
     , fbPostRequest
+    , fbDeleteRequest
     ) where
 
 import Data.ByteString (ByteString)
@@ -39,6 +40,19 @@ fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b)
              -> m (Response b FB.ErrorDetails)
 fbGetRequest = mkRequest id
 
+fbDeleteRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b)
+                => String
+                -> [(ByteString, Maybe ByteString)]
+                -> a
+                -> AccessToken
+                -> HTTP.Manager
+                -> m (Response b FB.ErrorDetails)
+fbDeleteRequest url querystring a = mkRequest setReq url querystring
+  where setReq req = req { HTTP.method = "DELETE"
+                         , HTTP.requestBody = HTTP.RequestBodyLBS $ encode a
+                         , HTTP.requestHeaders = [(hContentType,"application/json")]
+                         }
+
 mkRequest :: (MonadIO m, MonadThrow m, FromJSON b)
           => (HTTP.Request -> HTTP.Request)
           -> String
@@ -72,7 +86,8 @@ goHTTP request mngr = do
                                              $ toStrict res
 
 accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
-accessTokenQuery token = ("access_token", Just $ TE.encodeUtf8 token)
+accessTokenQuery (AccessToken token) =
+    ("access_token", Just $ TE.encodeUtf8 token)
 
 goPR :: (MonadIO m, MonadThrow m) => String -> m HTTP.Request
 goPR = HTTP.parseRequest . mappend "https://graph.facebook.com/v2.12/"
