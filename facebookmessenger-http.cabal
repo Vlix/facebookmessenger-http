@@ -25,14 +25,15 @@ library
 
   build-depends:       base
                      , aeson
-                     , http-client
-                     , http-types
-                     , text
-                     , facebookmessenger >= 0.6 && < 1.0
-                     , transformers
-                     , mtl
                      , bytestring
                      , exceptions
+                     , facebookmessenger >= 0.6 && < 1.0
+                     , http-client
+                     , http-types
+                     , mtl
+                     , text
+                     , time
+                     , transformers
   -- hs-source-dirs:
   default-language:    Haskell2010
   default-extensions:  OverloadedStrings

@@ -1,7 +1,6 @@
 module Network.Facebook.Messenger.Reader (
   messageRequest
   , senderActionRequest
-  , profileRequest
   , userProfileRequest
   , psidRequest
   , accountUnlinkRequest
@@ -38,14 +37,6 @@ senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader
                     -> m (Response FB.SenderActionResponse FB.ErrorDetails)
 senderActionRequest saRequest =
     withManager . NFB.senderActionRequest saRequest
-
-
-profileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
-               => FB.ProfileRequest
-               -> AccessToken
-               -> m (Response FB.SuccessResponse FB.ErrorDetails)
-profileRequest setRequest =
-    withManager . NFB.profileRequest setRequest
 
 
 userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
