@@ -1,8 +1,9 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 module Network.Facebook.Messenger.Types where
 
 
-import Data.Aeson (FromJSON(..), withText)
+import Data.Aeson (FromJSON(..), ToJSON, withText)
 import Data.Text (Text, unpack)
 import Data.ByteString (ByteString)
 import Network.HTTP.Types (Status)
@@ -11,7 +12,9 @@ import Web.Facebook.Messenger.Internal (withTextCI)
 
 
 newtype AccessToken = AccessToken Text
+  deriving (Eq, Show, Ord, Read, FromJSON, ToJSON)
 newtype AccountLinkToken = AccountLinkToken Text
+  deriving (Eq, Show, Ord, Read, FromJSON, ToJSON)
 
 data Response a b = Response a
                   | FailureResponse Status b
