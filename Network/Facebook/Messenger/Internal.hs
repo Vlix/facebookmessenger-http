@@ -73,17 +73,20 @@ goHTTP :: (MonadIO m, FromJSON a)
        -> m (Response a FB.ErrorDetails)
 goHTTP request mngr = do
     response <- liftIO $ HTTP.httpLbs request mngr
-    return $ tryError $ HTTP.responseBody response
-  where tryError res =
-            either trySuccess (FailureResponse . FB.erError) eDecoded
+    let status = HTTP.responseStatus response
+        body = HTTP.responseBody response
+    return $ tryError status body
+  where tryError status res =
+            either trySuccess (FailureResponse status . FB.erError) eDecoded
           where eDecoded :: FromJSON a => Either String a
                 eDecoded = eitherDecode' res
                 trySuccess errorFail =
                     either (badResponse errorFail) Response eDecoded
                 badResponse errorFail successFail =
-                    BadResponse $ ParseError (Text.pack successFail)
-                                             (Text.pack errorFail)
-                                             $ toStrict res
+                    BadResponse status $ ParseError
+                        (Text.pack successFail)
+                        (Text.pack errorFail)
+                        $ toStrict res
 
 accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
 accessTokenQuery (AccessToken token) =

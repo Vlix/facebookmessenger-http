@@ -5,6 +5,7 @@ module Network.Facebook.Messenger.Types where
 import Data.Aeson (FromJSON(..), withText)
 import Data.Text (Text, unpack)
 import Data.ByteString (ByteString)
+import Network.HTTP.Types (Status)
 
 import Web.Facebook.Messenger.Internal (withTextCI)
 
@@ -13,8 +14,8 @@ newtype AccessToken = AccessToken Text
 newtype AccountLinkToken = AccountLinkToken Text
 
 data Response a b = Response a
-                  | FailureResponse b
-                  | BadResponse ParseError
+                  | FailureResponse Status b
+                  | BadResponse Status ParseError
 
 data ParseError = ParseError
     { successParseFail :: Text
