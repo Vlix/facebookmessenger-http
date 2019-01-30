@@ -1,3 +1,10 @@
+{-|
+Module      : Network.Facebook.Messenger
+Copyright   : (c) Felix Paulusma, 2018
+License     : MIT
+Maintainer  : felix.paulusma@gmail.com
+Stability   : semi-experimental
+-}
 module Network.Facebook.Messenger (
   -- * Types
   AccessToken (..)
@@ -25,8 +32,10 @@ module Network.Facebook.Messenger (
   , getMessengerProfileRequest
   , setMessengerProfileRequest
   , deleteMessengerProfileRequest
+  , MessengerProfileType(..)
   -- ** Messaging Insights
   , metricRequest
+  , MessagingMetricsType(..)
   , MetricResponse
   , MetricValues (..)
   , MetricValue (..)
@@ -79,6 +88,8 @@ https://developers.facebook.com/docs/messenger-platform/reference/id-matching-ap
 
 -}
 
+-- | Send a 'SendRequest' to Facebook using an 'AccessToken'
+-- and an HTTP 'Manager'
 messageRequest :: (MonadIO m, MonadThrow m)
                => FB.SendRequest
                -> AccessToken
@@ -86,6 +97,8 @@ messageRequest :: (MonadIO m, MonadThrow m)
                -> m (Response FB.MessageResponse FB.ErrorDetails)
 messageRequest = fbPostRequest "me/messages" []
 
+-- | Send a 'SendActionRequest' to Facebook using an 'AccessToken'
+-- and an HTTP 'Manager'
 senderActionRequest :: (MonadIO m, MonadThrow m)
                     => FB.SenderActionRequest
                     -> AccessToken
@@ -98,6 +111,8 @@ senderActionRequest = fbPostRequest "me/messages" []
 --  USER PROFILE  --
 -- -------------- --
 
+-- | Request some User Profile data from a Facebook 'FB.PSID'
+-- using an 'AccessToken' and an HTTP 'Manager'
 userProfileRequest :: (MonadIO m, MonadThrow m)
                    => [UserProfileType]
                    -> FB.PSID
@@ -112,6 +127,8 @@ userProfileRequest uptypes (FB.PSID psid) =
 --  ACCOUNT LINKING  --
 -- ----------------- --
 
+-- | Send a 'FB.PSID' request with an 'AccountLinkToken'
+-- using an 'AccessToken' and an HTTP 'Manager'
 psidRequest :: (MonadIO m, MonadThrow m)
             => AccountLinkToken
             -> AccessToken
@@ -123,6 +140,8 @@ psidRequest (AccountLinkToken accountLinkToken) =
                           ,("account_linking_token", Just bsALToken)
                           ]
 
+-- | Send an 'AccountUnlinkRequest' to Facebook using an 'AccessToken'
+-- and an HTTP 'Manager'
 accountUnlinkRequest :: (MonadIO m, MonadThrow m)
                      => FB.AccountUnlinkRequest
                      -> AccessToken
@@ -134,6 +153,8 @@ accountUnlinkRequest = fbPostRequest "me/unlink_accounts" []
 --  THREAD CONTROL  --
 -- ---------------- --
 
+-- | Send a 'PassThreadControlRequest' to Facebook using an 'AccessToken'
+-- and an HTTP 'Manager'
 passThreadControlRequest :: (MonadIO m, MonadThrow m)
                          => FB.PassThreadControlRequest
                          -> AccessToken
@@ -141,6 +162,8 @@ passThreadControlRequest :: (MonadIO m, MonadThrow m)
                          -> m (Response FB.ThreadControlResponse FB.ErrorDetails)
 passThreadControlRequest = fbPostRequest "me/pass_thread_control" []
 
+-- | Send a 'ThreadControlRequest' to Facebook to request a certain thread
+-- using an 'AccessToken' and an HTTP 'Manager'
 requestThreadControlRequest :: (MonadIO m, MonadThrow m)
                             => FB.ThreadControlRequest
                             -> AccessToken
@@ -148,6 +171,8 @@ requestThreadControlRequest :: (MonadIO m, MonadThrow m)
                             -> m (Response FB.ThreadControlResponse FB.ErrorDetails)
 requestThreadControlRequest = fbPostRequest "me/request_thread_control" []
 
+-- | Send a 'ThreadControlRequest' to Facebook to take control of a certain thread
+-- using an 'AccessToken' and an HTTP 'Manager'
 takeThreadControlRequest :: (MonadIO m, MonadThrow m)
                          => FB.ThreadControlRequest
                          -> AccessToken
@@ -155,12 +180,16 @@ takeThreadControlRequest :: (MonadIO m, MonadThrow m)
                          -> m (Response FB.ThreadControlResponse FB.ErrorDetails)
 takeThreadControlRequest = fbPostRequest "me/take_thread_control" []
 
+-- | Request a list of Secondary Receivers from Facebook
+-- using an 'AccessToken' and an HTTP 'Manager'
 secondaryReceiversRequest :: (MonadIO m, MonadThrow m)
                           => AccessToken
                           -> Manager
                           -> m (Response FB.SecondaryReceiverResponse FB.ErrorDetails)
 secondaryReceiversRequest = fbGetRequest "me/secondary_receivers" [("fields", Just "id,name")]
 
+-- | Request the 'AppId' of the owner of the thread using a user's 'FB.PSID',
+-- an 'AccessToken' and an HTTP 'Manager'
 threadOwnerRequest :: (MonadIO m, MonadThrow m)
                    => FB.PSID
                    -> AccessToken
@@ -175,6 +204,8 @@ threadOwnerRequest (FB.PSID psid) =
 --  MESSENGER CODES  --
 -- ----------------- --
 
+-- | Request a Messenger Code from Facebook
+-- using an 'AccessToken' and an HTTP 'Manager'
 messengerCodeRequest :: (MonadIO m, MonadThrow m)
                      => FB.MessengerCodeRequest
                      -> AccessToken
@@ -187,6 +218,8 @@ messengerCodeRequest = fbPostRequest "me/messenger_codes" []
 --  MESSENGER PROFILE  --
 -- ------------------- --
 
+-- | Request the profile settings of the Facebook App
+-- using an 'AccessToken' and an HTTP 'Manager'
 getMessengerProfileRequest :: (MonadIO m, MonadThrow m)
                            => [MessengerProfileType]
                            -> AccessToken
@@ -195,6 +228,8 @@ getMessengerProfileRequest :: (MonadIO m, MonadThrow m)
 getMessengerProfileRequest mptypes =
     fbGetRequest "me/messenger_profile" [("fields", Just $ commaList mptypes)]
 
+-- | Set the profile settings of the Facebook App
+-- using an 'AccessToken' and an HTTP 'Manager'
 setMessengerProfileRequest :: (MonadIO m, MonadThrow m)
                            => FB.ProfileRequest
                            -> AccessToken
@@ -202,6 +237,8 @@ setMessengerProfileRequest :: (MonadIO m, MonadThrow m)
                            -> m (Response FB.SuccessResponse FB.ErrorDetails)
 setMessengerProfileRequest = fbPostRequest "me/messenger_profile" []
 
+-- | Request the deletion of certain settings of the Facebook app
+-- using an 'AccessToken' and an HTTP 'Manager'
 deleteMessengerProfileRequest :: (MonadIO m, MonadThrow m)
                               => [MessengerProfileType]
                               -> AccessToken
@@ -214,6 +251,8 @@ deleteMessengerProfileRequest = fbDeleteRequest "me/messenger_profile" [] . go
 --  MESSAGING INSIGHTS  --
 -- -------------------- --
 
+-- | Request specific metrics of the Facebook App using potential lower and/or
+-- upper time bounds, an 'AccessToken' and an HTTP 'Manager'
 metricRequest :: (MonadIO m, MonadThrow m)
               => [MessagingMetricsType]
               -> Maybe POSIXTime
@@ -229,8 +268,10 @@ metricRequest mmtypes since until' =
         posixToBS = fromString . show . (truncate :: Double -> Integer) . realToFrac
         metrics = commaList mmtypes
 
+-- | List of metrics
 type MetricResponse = FB.DataResponse MetricValues
 
+-- | Metrics from a certain period
 data MetricValues = MetricValues
   { metricName :: MessagingMetricsType
   , metricPeriod :: Text
@@ -243,6 +284,7 @@ instance FromJSON MetricValues where
                    <*> o .:? "period" .!= "day"
                    <*> o .: "values"
 
+-- | Metric value of a certain time/period
 data MetricValue = MetricValue
   { metricValue :: Value -- ^ Integer of Object, according to Facebook
   , metricEndTime :: UTCTime
@@ -258,14 +300,18 @@ instance FromJSON MetricValue where
 --  MESSAGING INSIGHTS  --
 -- -------------------- --
 
+-- | Request the status of a feature of the Facebook App that's (been) in review
+-- using an 'AccessToken' and an HTTP 'Manager'
 featureReviewRequest :: (MonadIO m, MonadThrow m)
                      => AccessToken
                      -> Manager
                      -> m (Response FeatureReviewResponse FB.ErrorDetails)
 featureReviewRequest = fbGetRequest "me/messaging_feature_review" []
 
+-- | List of feature statuses
 type FeatureReviewResponse = FB.DataResponse FeatureStatus
 
+-- | The status of a certain feature
 data FeatureStatus = FeatureStatus
     { featureName :: Text
     , featureStatus :: FeatureStatusType

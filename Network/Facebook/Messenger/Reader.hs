@@ -1,14 +1,53 @@
+{-|
+Module      : Network.Facebook.Messenger.Reader
+Copyright   : (c) Felix Paulusma, 2018
+License     : MIT
+Maintainer  : felix.paulusma@gmail.com
+Stability   : semi-experimental
+-}
 module Network.Facebook.Messenger.Reader (
-  messageRequest
-  , senderActionRequest
-  , userProfileRequest
-  , psidRequest
-  , accountUnlinkRequest
-  , AccessToken
-  , AccountLinkToken
-  , UserProfileType (..)
+  -- * Types
+  AccessToken (..)
   , Response (..)
   , ParseError (..)
+  -- * Requests
+  , messageRequest
+  , senderActionRequest
+  -- ** User Profile
+  , userProfileRequest
+  , UserProfileType (..)
+  -- ** Account Linking
+  , psidRequest
+  , accountUnlinkRequest
+  , AccountLinkToken (..)
+
+{-
+  -- ** Thread Control
+  , passThreadControlRequest
+  , requestThreadControlRequest
+  , takeThreadControlRequest
+  , secondaryReceiversRequest
+  , threadOwnerRequest
+  -- ** Messenger Code
+  , messengerCodeRequest
+  -- ** Messenger Profile
+  , getMessengerProfileRequest
+  , setMessengerProfileRequest
+  , deleteMessengerProfileRequest
+  , MessengerProfileType(..)
+  -- ** Messaging Insights
+  , metricRequest
+  , MessagingMetricsType(..)
+  , MetricResponse
+  , MetricValues (..)
+  , MetricValue (..)
+  -- ** Messaging Feature Review
+  , featureReviewRequest
+  , FeatureReviewResponse
+  , FeatureStatus (..)
+  , FeatureStatusType (..)
+-}
+
   ) where
 
 
@@ -22,7 +61,7 @@ import qualified Web.Facebook.Messenger as FB
 import qualified Network.Facebook.Messenger as NFB
 import Network.Facebook.Messenger.Types
 
-
+-- | The same as 'NFB.messageRequest', but gets the HTTP 'Manager' from the environment.
 messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                => FB.SendRequest
                -> AccessToken
@@ -30,7 +69,7 @@ messageRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env 
 messageRequest sRequest =
     withManager . NFB.messageRequest sRequest
 
-
+-- | The same as 'NFB.senderActionRequest', but gets the HTTP 'Manager' from the environment.
 senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                     => FB.SenderActionRequest
                     -> AccessToken
@@ -38,7 +77,7 @@ senderActionRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader
 senderActionRequest saRequest =
     withManager . NFB.senderActionRequest saRequest
 
-
+-- | The same as 'NFB.userProfileRequest', but gets the HTTP 'Manager' from the environment.
 userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                    => [UserProfileType]
                    -> FB.PSID
@@ -47,7 +86,7 @@ userProfileRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader 
 userProfileRequest uptypes userid =
     withManager . NFB.userProfileRequest uptypes userid
 
-
+-- | The same as 'NFB.psidRequest', but gets the HTTP 'Manager' from the environment.
 psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
             => AccountLinkToken
             -> AccessToken
@@ -55,6 +94,7 @@ psidRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
 psidRequest accountLinkToken =
     withManager . NFB.psidRequest accountLinkToken
 
+-- | The same as 'NFB.accountUnlinkRequest', but gets the HTTP 'Manager' from the environment.
 accountUnlinkRequest :: (MonadThrow m, MonadIO m, HasHttpManager env, MonadReader env m)
                      => FB.AccountUnlinkRequest
                      -> AccessToken

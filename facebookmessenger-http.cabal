@@ -18,8 +18,8 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Network.Facebook.Messenger
                        Network.Facebook.Messenger.Reader
-                       Network.Facebook.Messenger.Types
   other-modules:       Network.Facebook.Messenger.Internal
+                       Network.Facebook.Messenger.Types
   -- other-extensions:
   default-extensions:  OverloadedStrings
 

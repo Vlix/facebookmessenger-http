@@ -1,6 +1,22 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
-module Network.Facebook.Messenger.Types where
+{-|
+Module      : Network.Facebook.Messenger.Types
+Copyright   : (c) Felix Paulusma, 2018
+License     : MIT
+Maintainer  : felix.paulusma@gmail.com
+Stability   : semi-experimental
+-}
+module Network.Facebook.Messenger.Types
+  ( AccessToken(..)
+  , AccountLinkToken(..)
+  , Response(..)
+  , ParseError(..)
+  , UserProfileType(..)
+  , MessengerProfileType(..)
+  , MessagingMetricsType(..)
+  , FeatureStatusType(..)
+  ) where
 
 
 import Data.Aeson (FromJSON(..), ToJSON, withText)
@@ -11,21 +27,34 @@ import Network.HTTP.Types (Status)
 import Web.Facebook.Messenger.Internal (withTextCI)
 
 
+-- | The access token of a certain Facebook App
+-- for a certain Facebook Page.
 newtype AccessToken = AccessToken Text
   deriving (Eq, Show, Ord, Read, FromJSON, ToJSON)
+
+-- | A token used to link a user to an external account.
 newtype AccountLinkToken = AccountLinkToken Text
   deriving (Eq, Show, Ord, Read, FromJSON, ToJSON)
 
+-- | The potential response from a request sent to Facebook.
 data Response a b = Response a
+                    -- ^ Successful response with expected result
                   | FailureResponse Status b
+                    -- ^ Failure with status code and expected error format
                   | BadResponse Status ParseError
+                    -- ^ Completely unexpected response with status code and info about the response
 
+-- | Information about what went wrong in a response.
 data ParseError = ParseError
     { successParseFail :: Text
+      -- ^ Failure parsing the expected successful response
     , errorParseFail   :: Text
+      -- ^ Failure parsing the expected error response
     , originalResponse  :: ByteString
+      -- ^ Raw response body
     } deriving (Eq, Show, Read, Ord)
 
+-- | Type of information that can be requested from a user's profile.
 data UserProfileType = FirstName
                      | LastName
                      | ProfilePic
@@ -59,6 +88,8 @@ instance Read UserProfileType where
                 $ match "is_payment_enabled" IsPaymentEnabled
                 $ const []
 
+-- | Types of information of a Facebook App that can be requested,
+-- set or deleted.
 data MessengerProfileType = Greeting
                           | GetStarted
                           | PersistentMenu
@@ -90,6 +121,7 @@ instance Read MessengerProfileType where
                 $ match "is_payment_enabled" HomeUrl
                 $ const []
 
+-- | Metrics of a Facebook App that can be requested.
 data MessagingMetricsType =
       TotalMessagingConnections
     | NewConversationUnique
@@ -130,6 +162,7 @@ instance FromJSON MessagingMetricsType where
       "page_messages_feedback_by_action_unique" -> pure FeedbackByActionUnique
       wat -> fail $ "unexpected MessagingMetricsType: " `mappend` unpack wat
 
+-- | Status of a feature that's (been) under review.
 data FeatureStatusType =
     PENDING
   | REJECTED

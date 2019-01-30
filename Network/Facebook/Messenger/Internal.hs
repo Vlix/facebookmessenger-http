@@ -1,3 +1,10 @@
+{-|
+Module      : Network.Facebook.Messenger.Internal
+Copyright   : (c) Felix Paulusma, 2018
+License     : MIT
+Maintainer  : felix.paulusma@gmail.com
+Stability   : semi-experimental
+-}
 module Network.Facebook.Messenger.Internal (
     fbGetRequest
     , fbPostRequest
@@ -92,5 +99,5 @@ accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
 accessTokenQuery (AccessToken token) =
     ("access_token", Just $ TE.encodeUtf8 token)
 
-goPR :: (MonadIO m, MonadThrow m) => String -> m HTTP.Request
+goPR :: MonadThrow m => String -> m HTTP.Request
 goPR = HTTP.parseRequest . mappend "https://graph.facebook.com/v2.12/"
