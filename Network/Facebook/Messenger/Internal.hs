@@ -100,4 +100,4 @@ accessTokenQuery (AccessToken token) =
     ("access_token", Just $ TE.encodeUtf8 token)
 
 goPR :: MonadThrow m => String -> m HTTP.Request
-goPR = HTTP.parseRequest . mappend "https://graph.facebook.com/v2.12/"
+goPR = HTTP.parseRequest . mappend "https://graph.facebook.com/v3.2/"
