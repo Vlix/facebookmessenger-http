@@ -19,6 +19,7 @@ import Control.Monad.Catch (MonadThrow)
 import Data.Aeson (FromJSON, ToJSON, eitherDecode', encode)
 import Data.Text as Text (pack)
 import Data.Text.Encoding as TE (encodeUtf8)
+import Data.Version (Version(..), showVersion)
 import qualified Network.HTTP.Client as HTTP
 import Network.HTTP.Types (hContentType)
 
@@ -27,20 +28,23 @@ import Network.Facebook.Messenger.Types
 
 
 fbPostRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b)
-              => String
+              => Version
+              -> String
               -> [(ByteString, Maybe ByteString)]
               -> a
               -> AccessToken
               -> HTTP.Manager
               -> m (Response b FB.ErrorDetails)
-fbPostRequest url querystring a = mkRequest setReq url querystring
+fbPostRequest version url querystring a =
+    mkRequest setReq version url querystring
   where setReq req = req { HTTP.method = "POST"
                          , HTTP.requestBody = HTTP.RequestBodyLBS $ encode a
                          , HTTP.requestHeaders = [(hContentType,"application/json")]
                          }
 
 fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b)
-             => String
+             => Version
+             -> String
              -> [(ByteString, Maybe ByteString)]
              -> AccessToken
              -> HTTP.Manager
@@ -48,13 +52,15 @@ fbGetRequest :: (MonadIO m, MonadThrow m, FromJSON b)
 fbGetRequest = mkRequest id
 
 fbDeleteRequest :: (MonadIO m, MonadThrow m, ToJSON a, FromJSON b)
-                => String
+                => Version
+                -> String
                 -> [(ByteString, Maybe ByteString)]
                 -> a
                 -> AccessToken
                 -> HTTP.Manager
                 -> m (Response b FB.ErrorDetails)
-fbDeleteRequest url querystring a = mkRequest setReq url querystring
+fbDeleteRequest version url querystring a =
+    mkRequest setReq version url querystring
   where setReq req = req { HTTP.method = "DELETE"
                          , HTTP.requestBody = HTTP.RequestBodyLBS $ encode a
                          , HTTP.requestHeaders = [(hContentType,"application/json")]
@@ -62,13 +68,14 @@ fbDeleteRequest url querystring a = mkRequest setReq url querystring
 
 mkRequest :: (MonadIO m, MonadThrow m, FromJSON b)
           => (HTTP.Request -> HTTP.Request)
+          -> Version
           -> String
           -> [(ByteString, Maybe ByteString)]
           -> AccessToken
           -> HTTP.Manager
           -> m (Response b FB.ErrorDetails)
-mkRequest f url querystring token mngr = do
-    req <- goPR url
+mkRequest f version url querystring token mngr = do
+    req <- goPR version url
     let newReq = f req
         newQueryString = accessTokenQuery token : querystring
         request = HTTP.setQueryString newQueryString newReq
@@ -99,5 +106,12 @@ accessTokenQuery :: AccessToken -> (ByteString, Maybe ByteString)
 accessTokenQuery (AccessToken token) =
     ("access_token", Just $ TE.encodeUtf8 token)
 
-goPR :: MonadThrow m => String -> m HTTP.Request
-goPR = HTTP.parseRequest . mappend "https://graph.facebook.com/v3.2/"
+goPR :: MonadThrow m => Version -> String -> m HTTP.Request
+goPR (Version v _) s = HTTP.parseRequest $ mconcat
+    [ "https://graph.facebook.com/v"
+    , version
+    , "/"
+    , s
+    ]
+  where
+    version = showVersion $ Version v []
